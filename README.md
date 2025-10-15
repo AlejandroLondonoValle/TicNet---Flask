@@ -107,7 +107,7 @@ Luego abre tu navegador en:
 **Luis Alejandro Londoño Valle**
 Desarrollador de software especializado en **C#, .NET, y Flask (Python)**
 📍 Medellín, Colombia
-🔗 [GitHub](https://github.com/AlejandroLondonoValle) · [LinkedIn](www.linkedin.com/in/luís-alejandro-londoño-valle)
+🔗 [GitHub](https://github.com/AlejandroLondonoValle) · [LinkedIn](https://co.linkedin.com/in/luís-alejandro-londoño-valle)
 
 ---
 
