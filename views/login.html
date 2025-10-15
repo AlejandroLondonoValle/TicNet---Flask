@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login - TicNet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light d-flex justify-content-center align-items-center vh-100">
+    <div class="card shadow p-4" style="width: 26rem;">
+        <h3 class="text-center mb-3">Iniciar Sesión</h3>
+        <div id="mensaje" class="mb-3"></div>
+
+        <!-- Comprobacion de Usuario -->
+        <div id="step-usuario">
+            <label class="form-label">Usuario</label>
+            <input type="text" id="usuario" class="form-control" placeholder="Tu usuario">
+            <button id="btn-verificar-usuario" class="btn btn-primary w-100 mt-3">Verificar usuario</button>
+        </div>
+
+        <!-- Comprobacion de Contraseña -->
+        <div id="step-password" style="display:none;">
+            <label class="form-label">Contraseña</label>
+            <input type="password" id="contraseña" class="form-control" placeholder="Tu contraseña">
+            <button id="btn-verificar-password" class="btn btn-success w-100 mt-3">Verificar contraseña</button>
+        </div>
+
+        <!-- Comprobacion de Captcha Casero -->
+        <form id="step-captcha" method="POST" action="{{ url_for('login_complete') }}" style="display:none;">
+            <input type="hidden" name="usuario" id="usuario-hidden">
+            <div class="mb-2">
+                <label class="form-label">Verificación (CAPTCHA)</label>
+                <div id="captcha-question" class="p-3 bg-white border rounded">Cargando...</div>
+            </div>
+
+            <div class="mb-3 mt-2">
+                <input type="text" class="form-control" id="captcha_input" name="captcha_input"
+                    placeholder="Escribe la respuesta numérica" required>
+            </div>
+
+            <div class="d-flex gap-2 mb-3">
+                <button type="button" id="btn-refresh-captcha" class="btn btn-outline-secondary flex-grow-1">🔄
+                    Nuevo</button>
+                <button type="submit" class="btn btn-dark flex-grow-1">Confirmar identidad</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const btnVerificarUsuario = document.getElementById('btn-verificar-usuario');
+        const btnVerificarPassword = document.getElementById('btn-verificar-password');
+        const mensaje = document.getElementById('mensaje');
+
+        btnVerificarUsuario.addEventListener('click', async () => {
+            const usuario = document.getElementById('usuario').value.trim();
+            if (!usuario) return alert('Por favor escribe un usuario.');
+
+            const res = await fetch('/check_user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario })
+            });
+            const data = await res.json();
+
+            if (data.exists) {
+                mensaje.innerHTML = `<div class="alert alert-success">Usuario encontrado ✅</div>`;
+                document.getElementById('step-usuario').style.display = 'none';
+                document.getElementById('step-password').style.display = 'block';
+            } else {
+                mensaje.innerHTML = `<div class="alert alert-danger">Usuario no encontrado ❌</div>`;
+                setTimeout(() => {
+                    window.location.href = '/'; // redirige al index después de mostrar el mensaje
+                }, 1500); // espera 1.5 segundos antes de redirigir
+            }
+        });
+
+        btnVerificarPassword.addEventListener('click', async () => {
+            // Nota: mantenemos el usuario en el campo original para reutilizarlo
+            const usuario = document.getElementById('usuario').value.trim();
+            const contraseña = document.getElementById('contraseña').value.trim();
+            if (!contraseña) return alert('Por favor escribe una contraseña.');
+
+            const res = await fetch('/check_password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario, contraseña })
+            });
+            const data = await res.json();
+
+            if (data.valid) {
+                mensaje.innerHTML = `<div class="alert alert-success">Contraseña correcta ✅</div>`;
+                document.getElementById('step-password').style.display = 'none';
+                document.getElementById('step-captcha').style.display = 'block';
+                document.getElementById('usuario-hidden').value = usuario;
+                // Generar captcha desde el servidor
+                loadCaptcha();
+            } else {
+                mensaje.innerHTML = `<div class="alert alert-danger">Contraseña incorrecta ❌</div>`;
+                setTimeout(() => {
+                    window.location.href = '/'; // redirige al index después de mostrar el mensaje
+                }, 1500); // espera 1.5 segundos antes de redirigir
+            }
+        });
+
+        // Función para pedir al servidor una nueva operación de captcha
+        async function loadCaptcha() {
+            document.getElementById('captcha-question').innerText = 'Cargando...';
+            document.getElementById('captcha_input').value = '';
+            try {
+                const res = await fetch('/generate_captcha');
+                const data = await res.json();
+                document.getElementById('captcha-question').innerText = data.question;
+            } catch (err) {
+                document.getElementById('captcha-question').innerText = 'Error al generar CAPTCHA. Intenta recargar la página.';
+                console.error('Error fetching captcha:', err);
+            }
+        }
+
+        // Botón para recargar un nuevo captcha
+        document.getElementById('btn-refresh-captcha').addEventListener('click', loadCaptcha);
+    </script>
+</body>
+
+</html>
