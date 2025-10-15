@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import random
+import os
 
 app = Flask(__name__, template_folder='views')
-app.secret_key = ''  # cambia esto en producción
+app.secret_key = os.urandom(24)
 
 # Usuarios y contraseñas
 usuarios_validos = {
